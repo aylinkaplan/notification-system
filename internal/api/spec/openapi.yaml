@@ -1,0 +1,157 @@
+openapi: 3.0.3
+info:
+  title: Notification System API
+  description: Event-driven notification system for SMS, Email, Push
+  version: 1.0.0
+
+paths:
+  /health:
+    get:
+      summary: Liveness check
+      responses:
+        '200':
+          description: OK
+  /ready:
+    get:
+      summary: Readiness check (DB + RabbitMQ)
+      responses:
+        '200':
+          description: Ready
+        '503':
+          description: Not ready
+  /metrics:
+    get:
+      summary: Real-time metrics
+      responses:
+        '200':
+          description: Queue depth, success/failure rates
+  /notifications:
+    get:
+      summary: List notifications
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, delivered, failed, cancelled]
+        - name: channel
+          in: query
+          schema:
+            type: string
+            enum: [sms, email, push]
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of notifications
+    post:
+      summary: Create notification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotificationRequest'
+      responses:
+        '201':
+          description: Created
+        '400':
+          description: Validation error
+  /notifications/batch:
+    post:
+      summary: Create batch (up to 1000)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notifications:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CreateNotificationRequest'
+      responses:
+        '201':
+          description: Created
+  /notifications/{id}:
+    get:
+      summary: Get notification by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification
+        '404':
+          description: Not found
+    delete:
+      summary: Cancel pending notification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Cancelled
+        '409':
+          description: Cannot cancel
+  /notifications/batch/{batchId}:
+    get:
+      summary: Get notifications by batch ID
+      parameters:
+        - name: batchId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of notifications
+
+components:
+  schemas:
+    CreateNotificationRequest:
+      type: object
+      required:
+        - recipient
+        - channel
+        - content
+      properties:
+        recipient:
+          type: string
+        channel:
+          type: string
+          enum: [sms, email, push]
+        content:
+          type: string
+        priority:
+          type: string
+          enum: [high, normal, low]
+          default: normal
+        idempotency_key:
+          type: string
