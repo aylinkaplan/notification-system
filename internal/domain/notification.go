@@ -44,6 +44,7 @@ type Notification struct {
 	ProviderMsgID   *string    `json:"provider_msg_id,omitempty" db:"provider_msg_id"`
 	RetryCount      int        `json:"retry_count" db:"retry_count"`
 	MaxRetries      int        `json:"max_retries" db:"max_retries"`
+	Source          string     `json:"source,omitempty" db:"source"`
 	ScheduledAt     *time.Time `json:"scheduled_at,omitempty" db:"scheduled_at"`
 	CreatedAt       time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt       time.Time  `json:"updated_at" db:"updated_at"`

@@ -3,9 +3,11 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/aylinkaplan/notification-system/internal/domain"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -70,8 +72,17 @@ func (s *NotificationService) Create(ctx context.Context, req domain.CreateNotif
 	if err := s.repo.Create(ctx, n); err != nil {
 		return nil, err
 	}
+	now := time.Now().UTC()
+	n.CreatedAt = now
+	n.UpdatedAt = now
+	n.Source = "api"
+	if batchID != nil {
+		n.Source = "batch"
+	}
 	if s.enqueue != nil {
-		_ = s.enqueue.Enqueue(ctx, n.ID, string(n.Channel), string(n.Priority))
+		if err := s.enqueue.Enqueue(ctx, n.ID, string(n.Channel), string(n.Priority)); err != nil {
+			log.Error().Err(err).Str("channel", string(n.Channel)).Str("id", n.ID.String()).Msg("enqueue failed")
+		}
 	}
 	return n, nil
 }
