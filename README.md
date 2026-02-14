@@ -128,8 +128,6 @@ curl -X POST http://localhost:8080/notifications -H "Content-Type: application/j
 
 **Overview:** REST API (Chi) receives notification requests and persists them in PostgreSQL; notification IDs are pushed to RabbitMQ (per-channel priority queues). Worker goroutines consume from the queue, apply per-channel rate limiting, and send to the provider (webhook.site); delivery status is written back to the database. Retries use exponential backoff (max 3 attempts).
 
-See [DESIGN.md](DESIGN.md) for full architecture and design decisions.
-
 **API documentation (Swagger UI):** When the API is running, open [http://localhost:8080/docs](http://localhost:8080/docs). Raw OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml) or `GET /openapi.yaml`.
 
 ## Database Migrations
